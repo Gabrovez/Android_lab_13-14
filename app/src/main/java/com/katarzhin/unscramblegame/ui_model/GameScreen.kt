@@ -59,8 +59,12 @@ fun GameScreen(
 
         GameLayout(
             currentScrambledWord = gameUiState.currentScrambledWord,
-            onUserGuessChanged = { },
-            onKeyboardDone = { }
+            userGuess = gameViewModel.userGuess,
+            onUserGuessChanged = { gameViewModel.updateUserGuess(it) },
+            onKeyboardDone = { gameViewModel.checkUserGuess() },
+            isGuessWrong = gameUiState.isGuessedWordWrong,
+            onSubmitClicked = { gameViewModel.checkUserGuess() },
+            onSkipClicked = { gameViewModel.skipWord() }
         )
     }
 }
@@ -98,12 +102,14 @@ fun GameStatus(
 @Composable
 fun GameLayout(
     currentScrambledWord: String,
+    userGuess: String,
     onUserGuessChanged: (String) -> Unit,
     onKeyboardDone: () -> Unit,
+    isGuessWrong: Boolean,
+    onSubmitClicked: () -> Unit,
+    onSkipClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var userGuess by remember { mutableStateOf("") }
-
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -128,6 +134,7 @@ fun GameLayout(
                 )
             }
         }
+
         Text(
             text = "Разгадайте слово",
             style = MaterialTheme.typography.titleMedium
@@ -136,7 +143,6 @@ fun GameLayout(
         OutlinedTextField(
             value = userGuess,
             onValueChange = {
-                userGuess = it
                 onUserGuessChanged(it)
             },
             singleLine = true,
@@ -147,10 +153,20 @@ fun GameLayout(
             ),
             keyboardActions = KeyboardActions(
                 onDone = { onKeyboardDone() }
-            )
+            ),
+            isError = isGuessWrong
         )
+
+        if (isGuessWrong) {
+            Text(
+                text = "Неправильно! Попробуйте ещё раз.",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
         Button(
-            onClick = { /* TODO */ },
+            onClick = onSubmitClicked,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
@@ -160,7 +176,7 @@ fun GameLayout(
         }
 
         OutlinedButton(
-            onClick = { /* TODO */ },
+            onClick = onSkipClicked,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
